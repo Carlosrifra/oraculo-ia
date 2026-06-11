@@ -5,14 +5,20 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, on
 // ⚙️ CONFIGURA AQUÍ TU LINK DE SUSCRIPCIÓN DE MERCADOPAGO
 const MP_LINK = "https://www.mercadopago.com.mx/subscriptions" // ← Reemplaza con tu link real
 const WHATSAPP = "5219931598038"
-const PRECIO = "99"
+const PRECIO = "49"
 
 const C = {
-  bg:"#0D0B14", bg2:"#161226", card:"#1C1730",
-  violet:"#8B5CF6", violetL:"#A78BFA", gold:"#F0C75E", goldD:"#C9A227",
-  text:"#F2EFFA", text2:"#B8B0D0", text3:"#7A7295",
-  border:"rgba(139,92,246,0.25)",
+  bg:"#0A0814",
+  glass:"rgba(28,22,52,0.55)",
+  glassBorder:"rgba(157,123,255,0.18)",
+  violet:"#9D7BFF", violetD:"#6D4DD4", violetL:"#C4ADFF",
+  gold:"#E8C36A", goldL:"#F5DBA0", goldD:"#B8923F",
+  text:"#F4F1FC", text2:"#B9B2D4", text3:"#766F96",
+  ok:"#7BE3A0",
 }
+
+const FH = "'Playfair Display', Georgia, serif"
+const FB = "'Inter', system-ui, sans-serif"
 
 const SIGNOS = [
   {n:"Aries",e:"♈",f:"21 mar - 19 abr"},{n:"Tauro",e:"♉",f:"20 abr - 20 may"},
@@ -83,48 +89,54 @@ const PARTIDOS = [
 const bandera = (c) => `https://flagcdn.com/w160/${c}.png`
 
 const s = {
-  wrap:{minHeight:"100vh",background:`radial-gradient(ellipse at top, #1a1230 0%, ${C.bg} 55%)`,color:C.text,fontFamily:"'Georgia',serif",paddingBottom:60},
-  center:{maxWidth:680,margin:"0 auto",padding:"0 1.25rem"},
-  hero:{textAlign:"center",padding:"3rem 1rem 1.5rem"},
-  logo:{fontSize:44,marginBottom:8},
-  h1:{fontSize:30,fontWeight:700,color:C.gold,margin:"0 0 8px",letterSpacing:1},
-  tagline:{fontSize:15,color:C.text2,fontStyle:"italic",margin:0},
-  userBar:{display:"flex",justifyContent:"center",alignItems:"center",gap:12,fontSize:13,color:C.text2,marginTop:14,flexWrap:"wrap"},
-  linkBtn:{background:"none",border:"none",color:C.violetL,cursor:"pointer",fontSize:13,textDecoration:"underline",fontFamily:"inherit"},
-  nav:{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",margin:"1.5rem 0"},
-  navBtn:{padding:"10px 20px",background:C.card,border:`1px solid ${C.border}`,borderRadius:24,color:C.text2,fontSize:14,cursor:"pointer",fontFamily:"inherit"},
-  navSel:{border:`1px solid ${C.gold}`,background:"rgba(240,199,94,0.08)",color:C.gold},
-  card:{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:"1.75rem",marginBottom:16},
-  signGrid:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:10},
-  signBtn:{padding:"14px 8px",background:C.bg2,border:`1px solid ${C.border}`,borderRadius:12,color:C.text2,cursor:"pointer",textAlign:"center",fontFamily:"inherit",transition:"all .2s"},
-  signSel:{border:`1px solid ${C.gold}`,background:"rgba(240,199,94,0.1)",color:C.gold},
-  signEmoji:{fontSize:26,display:"block",marginBottom:4},
+  wrap:{minHeight:"100vh",background:`radial-gradient(900px 500px at 50% -8%, rgba(109,77,212,0.28), transparent 60%), radial-gradient(700px 400px at 85% 20%, rgba(232,195,106,0.07), transparent 55%), ${C.bg}`,color:C.text,fontFamily:FB,paddingBottom:80},
+  center:{maxWidth:700,margin:"0 auto",padding:"0 1.25rem"},
+  hero:{textAlign:"center",padding:"3.5rem 1rem 1.25rem"},
+  logo:{fontSize:50,marginBottom:10,filter:"drop-shadow(0 0 24px rgba(157,123,255,0.5))"},
+  h1:{fontSize:38,fontWeight:700,fontFamily:FH,background:`linear-gradient(120deg, ${C.goldL}, ${C.gold} 45%, ${C.goldD})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",margin:"0 0 10px",letterSpacing:3},
+  tagline:{fontSize:15,color:C.text2,fontStyle:"italic",fontFamily:FH,margin:0,letterSpacing:.3},
+  userBar:{display:"flex",justifyContent:"center",alignItems:"center",gap:14,fontSize:13,color:C.text2,marginTop:18,flexWrap:"wrap"},
+  linkBtn:{background:"none",border:"none",color:C.violetL,cursor:"pointer",fontSize:13,textDecoration:"underline",fontFamily:FB},
+  nav:{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",margin:"1.75rem 0"},
+  navBtn:{padding:"11px 22px",background:C.glass,backdropFilter:"blur(12px)",border:`1px solid ${C.glassBorder}`,borderRadius:30,color:C.text2,fontSize:13.5,fontWeight:500,cursor:"pointer"},
+  navSel:{border:`1px solid ${C.gold}`,background:"rgba(232,195,106,0.1)",color:C.gold,boxShadow:"0 0 24px rgba(232,195,106,0.15)"},
+  card:{background:C.glass,backdropFilter:"blur(16px)",border:`1px solid ${C.glassBorder}`,borderRadius:22,padding:"2rem",marginBottom:18,boxShadow:"0 18px 50px rgba(0,0,0,0.45)"},
+  cardTitle:{fontFamily:FH,fontSize:21,fontWeight:600,color:C.gold,textAlign:"center",margin:"0 0 6px"},
+  cardSub:{textAlign:"center",color:C.text2,fontSize:14,margin:"0 0 1.4rem",lineHeight:1.6},
+  signGrid:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(104px,1fr))",gap:10},
+  signBtn:{padding:"15px 8px",background:"rgba(10,8,20,0.5)",border:`1px solid ${C.glassBorder}`,borderRadius:14,color:C.text2,cursor:"pointer",textAlign:"center"},
+  signSel:{border:`1px solid ${C.gold}`,background:"rgba(232,195,106,0.1)",color:C.gold,boxShadow:"0 0 18px rgba(232,195,106,0.12)"},
+  signEmoji:{fontSize:27,display:"block",marginBottom:5},
   signName:{fontSize:13,fontWeight:600},
-  signDate:{fontSize:10,color:C.text3,display:"block",marginTop:2},
-  btnGold:{padding:"13px 34px",background:`linear-gradient(135deg, ${C.gold}, ${C.goldD})`,color:"#1a1230",border:"none",borderRadius:28,fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"inherit",letterSpacing:.5,display:"block",margin:"1.5rem auto 0"},
-  btnViolet:{padding:"13px 34px",background:`linear-gradient(135deg, ${C.violet}, #6D28D9)`,color:"#fff",border:"none",borderRadius:28,fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"inherit",letterSpacing:.5,display:"block",margin:"1.5rem auto 0"},
-  lectura:{background:C.bg2,border:`1px solid rgba(240,199,94,0.3)`,borderRadius:14,padding:"1.5rem",marginTop:20,fontSize:15,lineHeight:1.9,whiteSpace:"pre-wrap",color:C.text},
-  input:{width:"100%",padding:"12px 14px",background:C.bg2,border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:14,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10},
-  cartaWrap:{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap",margin:"1.5rem 0"},
-  carta:{width:90,height:140,background:`linear-gradient(135deg, #2a1f4a, #1a1230)`,border:`2px solid ${C.violet}`,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,cursor:"pointer",transition:"transform .3s",color:C.violetL},
-  cartaSel:{border:`2px solid ${C.gold}`,background:`linear-gradient(135deg, #3a2a1a, #2a1f0a)`,transform:"translateY(-8px)",color:C.gold},
-  premium:{display:"inline-block",background:`linear-gradient(135deg, ${C.gold}, ${C.goldD})`,color:"#1a1230",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:10,letterSpacing:1,verticalAlign:"middle",marginLeft:8},
-  precio:{textAlign:"center",padding:"2rem 0 1rem"},
-  precioNum:{fontSize:46,fontWeight:700,color:C.gold},
-  feature:{display:"flex",gap:10,alignItems:"flex-start",padding:"7px 0",fontSize:14,color:C.text2},
-  loading:{textAlign:"center",padding:"2rem",fontSize:15,color:C.violetL},
-  error:{background:"rgba(239,83,80,0.1)",border:"1px solid rgba(239,83,80,0.3)",borderRadius:10,padding:"12px 16px",color:"#ef9a9a",fontSize:14,marginTop:14},
-  aviso:{background:"rgba(240,199,94,0.08)",border:`1px solid rgba(240,199,94,0.3)`,borderRadius:10,padding:"12px 16px",color:C.gold,fontSize:13,marginTop:14,lineHeight:1.6},
-  footer:{textAlign:"center",fontSize:12,color:C.text3,marginTop:40,lineHeight:1.8},
-  modal:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:"1rem"},
-  modalCard:{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:"2rem",maxWidth:400,width:"100%"},
+  signDate:{fontSize:10,color:C.text3,display:"block",marginTop:3},
+  btnGold:{padding:"15px 38px",background:`linear-gradient(135deg, ${C.goldL}, ${C.gold} 50%, ${C.goldD})`,color:"#1a1230",border:"none",borderRadius:30,fontWeight:700,fontSize:15,cursor:"pointer",letterSpacing:.4,display:"block",margin:"1.6rem auto 0",boxShadow:"0 10px 30px rgba(232,195,106,0.3)"},
+  btnViolet:{padding:"15px 38px",background:`linear-gradient(135deg, ${C.violet}, ${C.violetD})`,color:"#fff",border:"none",borderRadius:30,fontWeight:700,fontSize:15,cursor:"pointer",letterSpacing:.4,display:"block",margin:"1.6rem auto 0",boxShadow:"0 10px 30px rgba(109,77,212,0.4)"},
+  lectura:{background:"rgba(10,8,20,0.6)",border:`1px solid rgba(232,195,106,0.3)`,borderRadius:16,padding:"1.6rem",marginTop:22,fontSize:15,lineHeight:1.95,whiteSpace:"pre-wrap",color:C.text},
+  input:{width:"100%",padding:"13px 15px",background:"rgba(10,8,20,0.6)",border:`1px solid ${C.glassBorder}`,borderRadius:12,color:C.text,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:10},
+  cartaWrap:{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap",margin:"1.6rem 0"},
+  carta:{width:92,height:144,background:`linear-gradient(150deg, #2a1f4d, #150f2e)`,border:`2px solid ${C.violet}`,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,cursor:"pointer",transition:"transform .3s, box-shadow .3s",color:C.violetL,boxShadow:"0 8px 22px rgba(0,0,0,0.45)"},
+  cartaSel:{border:`2px solid ${C.gold}`,background:`linear-gradient(150deg, #3a2c12, #251a08)`,transform:"translateY(-10px)",color:C.gold,boxShadow:"0 16px 32px rgba(232,195,106,0.25)"},
+  premium:{display:"inline-block",background:`linear-gradient(135deg, ${C.goldL}, ${C.goldD})`,color:"#1a1230",fontSize:10,fontWeight:700,padding:"3px 11px",borderRadius:11,letterSpacing:1.2,verticalAlign:"middle",marginLeft:8},
+  gratis:{display:"inline-block",background:"rgba(123,227,160,0.15)",border:"1px solid rgba(123,227,160,0.4)",color:C.ok,fontSize:10,fontWeight:700,padding:"3px 11px",borderRadius:11,letterSpacing:1.2,verticalAlign:"middle",marginLeft:8},
+  precio:{textAlign:"center",padding:"1.6rem 0 1rem"},
+  precioNum:{fontSize:54,fontWeight:700,fontFamily:FH,background:`linear-gradient(120deg, ${C.goldL}, ${C.gold})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"},
+  feature:{display:"flex",gap:12,alignItems:"flex-start",padding:"8px 0",fontSize:14,color:C.text2,lineHeight:1.55},
+  loading:{textAlign:"center",padding:"2rem",fontSize:15,color:C.violetL,fontFamily:FH,fontStyle:"italic"},
+  error:{background:"rgba(239,83,80,0.1)",border:"1px solid rgba(239,83,80,0.3)",borderRadius:12,padding:"13px 17px",color:"#ef9a9a",fontSize:14,marginTop:16},
+  aviso:{background:"rgba(232,195,106,0.08)",border:`1px solid rgba(232,195,106,0.35)`,borderRadius:12,padding:"14px 18px",color:C.goldL,fontSize:13.5,marginTop:16,lineHeight:1.7},
+  contador:{textAlign:"center",fontSize:13,color:C.ok,marginTop:12},
+  footer:{textAlign:"center",fontSize:12,color:C.text3,marginTop:48,lineHeight:1.9},
+  modal:{position:"fixed",inset:0,background:"rgba(5,3,12,0.82)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100,padding:"1rem"},
+  modalCard:{background:"#171231",border:`1px solid ${C.glassBorder}`,borderRadius:22,padding:"2.2rem",maxWidth:410,width:"100%",boxShadow:"0 30px 80px rgba(0,0,0,0.6)"},
+  partidoRow:{display:"flex",alignItems:"center",gap:10,padding:"11px 15px",cursor:"pointer",borderBottom:`1px solid rgba(157,123,255,0.1)`},
+  flag:{width:32,height:21,borderRadius:4,objectFit:"cover",boxShadow:"0 2px 6px rgba(0,0,0,0.4)"},
 }
 
 export default function App() {
-  const [tab, setTab] = useState("horoscopo")
+  const [tab, setTab] = useState("mundial")
   const [user, setUser] = useState(null)
   const [showAuth, setShowAuth] = useState(false)
-  const [authMode, setAuthMode] = useState("login")
+  const [authMode, setAuthMode] = useState("registro")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [authError, setAuthError] = useState("")
@@ -139,11 +151,12 @@ export default function App() {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState("")
   const [sinSub, setSinSub] = useState(false)
+  const [agotadas, setAgotadas] = useState(false)
   const [partido, setPartido] = useState(null)
   const [fechaNac, setFechaNac] = useState("")
-  const [telefono, setTelefono] = useState("")
   const [colorFav, setColorFav] = useState("")
   const [prediccion, setPrediccion] = useState(null)
+  const [restantes, setRestantes] = useState(null)
 
   useEffect(() => onAuthStateChanged(auth, u => setUser(u)), [])
 
@@ -168,7 +181,7 @@ export default function App() {
   }
 
   const consultar = async (payload) => {
-    setCargando(true); setError(""); setLectura(""); setSinSub(false)
+    setCargando(true); setError(""); setLectura(""); setSinSub(false); setAgotadas(false)
     try {
       const idToken = user ? await user.getIdToken() : null
       const r = await fetch("/api/oraculo", {
@@ -178,43 +191,40 @@ export default function App() {
       })
       const d = await r.json()
       if (d.error === "LOGIN_REQUERIDO") {
-        setShowAuth(true)
-        setError("Inicia sesión o crea tu cuenta para usar esta función")
+        setShowAuth(true); setAuthMode("registro")
+        setError("Crea tu cuenta gratis para continuar")
       } else if (d.error === "SIN_SUSCRIPCION") {
         setSinSub(true)
+      } else if (d.error === "PREDICCIONES_AGOTADAS") {
+        setAgotadas(true)
       } else if (d.error) {
         setError(d.error)
       } else {
-        setLectura(d.lectura)
+        return d
       }
     } catch (e) {
       setError("El oráculo no responde, intenta de nuevo")
+    } finally {
+      setCargando(false)
     }
-    setCargando(false)
+    return null
   }
 
-  const toggleCarta = (c) => {
-    if (cartasSel.includes(c)) setCartasSel(cartasSel.filter(x => x !== c))
-    else if (cartasSel.length < 3) setCartasSel([...cartasSel, c])
+  const consultarLectura = async (payload) => {
+    const d = await consultar(payload)
+    if (d) setLectura(d.lectura)
   }
-
-  const cambiarTab = (t) => { setTab(t); setLectura(""); setError(""); setCartasSel([]); setSinSub(false); setPrediccion(null) }
 
   const predecirMundial = async () => {
     if (!partido) return
-    setCargando(true); setError(""); setPrediccion(null)
-    try {
-      const r = await fetch("/api/oraculo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo:"mundial", equipo1:partido.e1, equipo2:partido.e2, nombreUsuario:nombre, fechaNac, telefono, colorFav }),
-      })
-      const d = await r.json()
-      if (d.error) { setError(d.error); setCargando(false); return }
+    if (!user) { setShowAuth(true); setAuthMode("registro"); return }
+    setPrediccion(null)
+    const d = await consultar({ tipo:"mundial", equipo1:partido.e1, equipo2:partido.e2, nombreUsuario:nombre, fechaNac, colorFav })
+    if (d) {
       const m = d.lectura.match(/MARCADOR:\s*(\d+)\s*-\s*(\d+)/)
       setPrediccion({ texto: d.lectura, g1: m?.[1]||"?", g2: m?.[2]||"?" })
-    } catch(e) { setError("El oráculo no responde, intenta de nuevo") }
-    setCargando(false)
+      setRestantes(d.restantes)
+    }
   }
 
   const descargarTarjeta = async () => {
@@ -224,13 +234,18 @@ export default function App() {
     const ctx = canvas.getContext("2d")
 
     const grad = ctx.createLinearGradient(0,0,0,1350)
-    grad.addColorStop(0,"#1a1230"); grad.addColorStop(1,"#0D0B14")
+    grad.addColorStop(0,"#1c1340"); grad.addColorStop(0.5,"#0f0a24"); grad.addColorStop(1,"#0A0814")
     ctx.fillStyle = grad; ctx.fillRect(0,0,1080,1350)
 
-    ctx.fillStyle = "#F0C75E"; ctx.font = "bold 56px Georgia"; ctx.textAlign = "center"
-    ctx.fillText("🔮 ORÁCULO IA", 540, 110)
-    ctx.fillStyle = "#B8B0D0"; ctx.font = "italic 32px Georgia"
-    ctx.fillText("Predicción Mística · Mundial 2026", 540, 165)
+    for(let i=0;i<60;i++){
+      ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.5+0.1})`
+      ctx.beginPath(); ctx.arc(Math.random()*1080, Math.random()*1350, Math.random()*1.8+0.4, 0, Math.PI*2); ctx.fill()
+    }
+
+    ctx.fillStyle = "#E8C36A"; ctx.font = "bold 58px Georgia"; ctx.textAlign = "center"
+    ctx.fillText("🔮 ORÁCULO IA", 540, 115)
+    ctx.fillStyle = "#B9B2D4"; ctx.font = "italic 32px Georgia"
+    ctx.fillText("Predicción Mística · Mundial 2026", 540, 170)
 
     const cargarImg = (url) => new Promise((res) => {
       const img = new Image(); img.crossOrigin = "anonymous"
@@ -239,45 +254,67 @@ export default function App() {
     })
     const [img1, img2] = await Promise.all([cargarImg(bandera(partido.c1)), cargarImg(bandera(partido.c2))])
 
-    if (img1) ctx.drawImage(img1, 120, 280, 280, 187)
-    if (img2) ctx.drawImage(img2, 680, 280, 280, 187)
-    ctx.strokeStyle = "#F0C75E"; ctx.lineWidth = 4
-    ctx.strokeRect(120, 280, 280, 187); ctx.strokeRect(680, 280, 280, 187)
+    ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 24
+    if (img1) ctx.drawImage(img1, 110, 290, 290, 193)
+    if (img2) ctx.drawImage(img2, 680, 290, 290, 193)
+    ctx.shadowBlur = 0
+    ctx.strokeStyle = "#E8C36A"; ctx.lineWidth = 4
+    ctx.strokeRect(110, 290, 290, 193); ctx.strokeRect(680, 290, 290, 193)
 
-    ctx.fillStyle = "#F2EFFA"; ctx.font = "bold 40px Georgia"
-    ctx.fillText(partido.e1, 260, 530); ctx.fillText(partido.e2, 820, 530)
+    ctx.fillStyle = "#F4F1FC"; ctx.font = "bold 40px Georgia"
+    ctx.fillText(partido.e1, 255, 545); ctx.fillText(partido.e2, 825, 545)
 
-    ctx.fillStyle = "#F0C75E"; ctx.font = "bold 160px Georgia"
-    ctx.fillText(`${prediccion.g1} - ${prediccion.g2}`, 540, 430)
+    ctx.fillStyle = "#E8C36A"; ctx.font = "bold 150px Georgia"
+    ctx.fillText(`${prediccion.g1} - ${prediccion.g2}`, 540, 440)
 
-    ctx.fillStyle = "#7A7295"; ctx.font = "28px Georgia"
-    ctx.fillText(`${partido.f} · ${partido.h} (MX) · ${partido.sede}`, 540, 600)
+    ctx.fillStyle = "#766F96"; ctx.font = "28px Georgia"
+    ctx.fillText(`${partido.f} · ${partido.h} (MX) · ${partido.sede}`, 540, 615)
 
     const frase = prediccion.texto.match(/FRASE DEL ORÁCULO:\s*([\s\S]+?)$/)?.[1]?.trim() || ""
     const señal = prediccion.texto.match(/LA SEÑAL:\s*([\s\S]+?)(?=MINUTO CLAVE:|$)/)?.[1]?.trim() || ""
-    ctx.fillStyle = "#B8B0D0"; ctx.font = "30px Georgia"
+    ctx.fillStyle = "#B9B2D4"; ctx.font = "30px Georgia"
     const wrap = (txt, y, maxW) => {
       const palabras = txt.split(" "); let linea = ""; let yy = y
       for (const p of palabras) {
-        if (ctx.measureText(linea + p).width > maxW) { ctx.fillText(linea, 540, yy); linea = p + " "; yy += 44 }
+        if (ctx.measureText(linea + p).width > maxW) { ctx.fillText(linea, 540, yy); linea = p + " "; yy += 46 }
         else linea += p + " "
       }
       ctx.fillText(linea, 540, yy); return yy
     }
-    let y = wrap(señal.slice(0,220), 700, 880)
-    ctx.fillStyle = "#F0C75E"; ctx.font = "italic bold 34px Georgia"
-    wrap('"' + frase.slice(0,150) + '"', y + 90, 880)
+    let y = wrap(señal.slice(0,220), 715, 880)
+    ctx.fillStyle = "#E8C36A"; ctx.font = "italic bold 35px Georgia"
+    wrap('"' + frase.slice(0,150) + '"', y + 95, 880)
 
-    ctx.fillStyle = "#7A7295"; ctx.font = "26px Georgia"
-    ctx.fillText("Haz tu predicción gratis en", 540, 1240)
-    ctx.fillStyle = "#A78BFA"; ctx.font = "bold 32px Georgia"
-    ctx.fillText(window.location.host, 540, 1285)
+    ctx.fillStyle = "#766F96"; ctx.font = "26px Georgia"
+    ctx.fillText("Haz tu predicción gratis en", 540, 1245)
+    ctx.fillStyle = "#C4ADFF"; ctx.font = "bold 34px Georgia"
+    ctx.fillText(window.location.host, 540, 1292)
 
     const link = document.createElement("a")
     link.download = `prediccion-${partido.e1}-vs-${partido.e2}.png`
     link.href = canvas.toDataURL("image/png")
     link.click()
   }
+
+  const toggleCarta = (c) => {
+    if (cartasSel.includes(c)) setCartasSel(cartasSel.filter(x => x !== c))
+    else if (cartasSel.length < 3) setCartasSel([...cartasSel, c])
+  }
+
+  const cambiarTab = (t) => { setTab(t); setLectura(""); setError(""); setCartasSel([]); setSinSub(false); setAgotadas(false); setPrediccion(null) }
+
+  const SuscripcionCTA = ({titulo}) => (
+    <div style={s.aviso}>
+      <strong>⭐ {titulo}</strong><br/>
+      Desbloquea predicciones ilimitadas, tarot y compatibilidad por solo <strong>${PRECIO} pesos al mes</strong> — menos que dos cafés.<br/>
+      <a href={MP_LINK} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
+        <button style={{...s.btnGold,margin:"14px auto 4px",padding:"12px 30px",fontSize:14}}>⭐ Suscribirme por ${PRECIO}/mes</button>
+      </a>
+      <span style={{display:"block",textAlign:"center",fontSize:11.5,color:C.text3,marginTop:8}}>
+        Paga con el mismo correo de tu cuenta: <strong style={{color:C.goldL}}>{user?.email}</strong>
+      </span>
+    </div>
+  )
 
   return (
     <div style={s.wrap}>
@@ -294,44 +331,51 @@ export default function App() {
                 <button style={s.linkBtn} onClick={()=>signOut(auth)}>Cerrar sesión</button>
               </>
             ) : (
-              <button style={s.linkBtn} onClick={()=>{setShowAuth(true);setAuthMode("login")}}>Iniciar sesión / Crear cuenta</button>
+              <button style={s.linkBtn} onClick={()=>{setShowAuth(true);setAuthMode("registro")}}>Crear cuenta gratis · 2 predicciones de regalo</button>
             )}
           </div>
         </div>
 
         <div style={s.nav}>
-          <button style={{...s.navBtn,...(tab==="mundial"?s.navSel:{}),border:tab==="mundial"?`1px solid ${C.gold}`:`1px solid #2e7d32`,color:tab==="mundial"?C.gold:"#81c784"}} onClick={()=>cambiarTab("mundial")}>⚽ Predice el Mundial — Gratis</button>
+          <button style={{...s.navBtn,...(tab==="mundial"?s.navSel:{})}} onClick={()=>cambiarTab("mundial")}>⚽ Predice el Mundial</button>
           <button style={{...s.navBtn,...(tab==="horoscopo"?s.navSel:{})}} onClick={()=>cambiarTab("horoscopo")}>✨ Horóscopo HOY</button>
           <button style={{...s.navBtn,...(tab==="tarot"?s.navSel:{})}} onClick={()=>cambiarTab("tarot")}>🃏 Tarot</button>
           <button style={{...s.navBtn,...(tab==="compatibilidad"?s.navSel:{})}} onClick={()=>cambiarTab("compatibilidad")}>💕 Compatibilidad</button>
         </div>
 
+        {/* ─── MUNDIAL ─── */}
         {tab==="mundial" && (
           <div style={s.card}>
-            <p style={{textAlign:"center",color:C.text2,fontSize:14,marginTop:0}}>
-              🏆 El oráculo lee TU energía para predecir el marcador. Elige un partido:
-            </p>
-            <div style={{maxHeight:300,overflowY:"auto",border:`1px solid ${C.border}`,borderRadius:12,marginBottom:16}}>
+            <h2 style={s.cardTitle}>El Oráculo del Mundial <span style={s.gratis}>2 GRATIS</span></h2>
+            <p style={s.cardSub}>El cosmos lee TU energía personal para revelar el marcador.<br/>Elige un partido del calendario oficial:</p>
+            <div style={{maxHeight:310,overflowY:"auto",border:`1px solid ${C.glassBorder}`,borderRadius:14}}>
               {PARTIDOS.map((p,i)=>(
-                <div key={i} onClick={()=>setPartido(p)} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",cursor:"pointer",borderBottom:`1px solid ${C.border}`,background:partido===p?"rgba(240,199,94,0.1)":"transparent"}}>
-                  <span style={{fontSize:11,color:C.text3,width:52,flexShrink:0}}>{p.f}<br/>{p.h}</span>
-                  <img src={bandera(p.c1)} alt="" style={{width:30,height:20,borderRadius:3,objectFit:"cover"}}/>
-                  <span style={{fontSize:13,flex:1,textAlign:"right",color:partido===p?C.gold:C.text}}>{p.e1}</span>
+                <div key={i} onClick={()=>setPartido(p)} style={{...s.partidoRow,background:partido===p?"rgba(232,195,106,0.1)":"transparent"}}>
+                  <span style={{fontSize:11,color:C.text3,width:54,flexShrink:0,lineHeight:1.5}}>{p.f}<br/>{p.h}</span>
+                  <img src={bandera(p.c1)} alt="" style={s.flag}/>
+                  <span style={{fontSize:13.5,flex:1,textAlign:"right",fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e1}</span>
                   <span style={{fontSize:11,color:C.text3}}>vs</span>
-                  <span style={{fontSize:13,flex:1,color:partido===p?C.gold:C.text}}>{p.e2}</span>
-                  <img src={bandera(p.c2)} alt="" style={{width:30,height:20,borderRadius:3,objectFit:"cover"}}/>
+                  <span style={{fontSize:13.5,flex:1,fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e2}</span>
+                  <img src={bandera(p.c2)} alt="" style={s.flag}/>
                 </div>
               ))}
             </div>
-            {partido && (
+            {partido && !user && (
+              <div style={{textAlign:"center",marginTop:20}}>
+                <p style={{fontSize:14,color:C.text2}}>Crea tu cuenta gratis y recibe <strong style={{color:C.ok}}>2 predicciones de regalo</strong></p>
+                <button style={{...s.btnGold,marginTop:8}} onClick={()=>{setShowAuth(true);setAuthMode("registro")}}>
+                  ✨ Crear cuenta gratis
+                </button>
+              </div>
+            )}
+            {partido && user && (
               <>
-                <p style={{textAlign:"center",fontSize:13,color:C.violetL}}>Dale tus datos místicos al oráculo:</p>
+                <p style={{textAlign:"center",fontSize:13.5,color:C.violetL,marginTop:20}}>Comparte tu energía con el oráculo:</p>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                   <input style={s.input} placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)}/>
                   <input style={s.input} type="date" value={fechaNac} onChange={e=>setFechaNac(e.target.value)}/>
-                  <input style={s.input} placeholder="Tu teléfono (solo lo lee el cosmos)" value={telefono} onChange={e=>setTelefono(e.target.value)}/>
-                  <input style={s.input} placeholder="Tu color favorito" value={colorFav} onChange={e=>setColorFav(e.target.value)}/>
                 </div>
+                <input style={s.input} placeholder="Tu color favorito" value={colorFav} onChange={e=>setColorFav(e.target.value)}/>
                 <button style={s.btnGold} onClick={predecirMundial} disabled={cargando}>
                   {cargando ? "El cosmos calcula..." : `⚽ Predecir ${partido.e1} vs ${partido.e2}`}
                 </button>
@@ -340,24 +384,30 @@ export default function App() {
             {prediccion && (
               <>
                 <div style={{...s.lectura,textAlign:"center"}}>
-                  <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:20,marginBottom:16}}>
-                    <img src={bandera(partido.c1)} alt="" style={{width:64,height:43,borderRadius:5,objectFit:"cover"}}/>
-                    <span style={{fontSize:42,fontWeight:700,color:C.gold}}>{prediccion.g1} - {prediccion.g2}</span>
-                    <img src={bandera(partido.c2)} alt="" style={{width:64,height:43,borderRadius:5,objectFit:"cover"}}/>
+                  <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:22,marginBottom:18}}>
+                    <img src={bandera(partido.c1)} alt="" style={{width:68,height:45,borderRadius:6,objectFit:"cover",boxShadow:"0 4px 14px rgba(0,0,0,0.5)"}}/>
+                    <span style={{fontSize:46,fontWeight:700,fontFamily:FH,color:C.gold}}>{prediccion.g1} - {prediccion.g2}</span>
+                    <img src={bandera(partido.c2)} alt="" style={{width:68,height:45,borderRadius:6,objectFit:"cover",boxShadow:"0 4px 14px rgba(0,0,0,0.5)"}}/>
                   </div>
                   <div style={{textAlign:"left",whiteSpace:"pre-wrap"}}>{prediccion.texto}</div>
                 </div>
+                {restantes !== null && restantes >= 0 && (
+                  <p style={s.contador}>✨ Te queda{restantes===1?"":"n"} {restantes} predicción{restantes===1?"":"es"} gratis</p>
+                )}
                 <button style={s.btnViolet} onClick={descargarTarjeta}>
                   📲 Descargar tarjeta para compartir
                 </button>
               </>
             )}
+            {agotadas && <SuscripcionCTA titulo="Tus 2 predicciones gratis se agotaron"/>}
           </div>
         )}
 
+        {/* ─── HORÓSCOPO ─── */}
         {tab==="horoscopo" && (
           <div style={s.card}>
-            <p style={{textAlign:"center",color:C.text2,fontSize:14,marginTop:0}}>Elige tu signo y descubre lo que los astros tienen para ti hoy</p>
+            <h2 style={s.cardTitle}>Horóscopo del Día <span style={s.gratis}>GRATIS</span></h2>
+            <p style={s.cardSub}>Elige tu signo y descubre lo que los astros tienen para ti hoy</p>
             <div style={s.signGrid}>
               {SIGNOS.map(sg=>(
                 <button key={sg.n} style={{...s.signBtn,...(signo===sg.n?s.signSel:{})}} onClick={()=>setSigno(sg.n)}>
@@ -368,18 +418,18 @@ export default function App() {
               ))}
             </div>
             {signo && (
-              <button style={s.btnGold} onClick={()=>consultar({tipo:"horoscopo",signo})} disabled={cargando}>
+              <button style={s.btnGold} onClick={()=>consultarLectura({tipo:"horoscopo",signo})} disabled={cargando}>
                 {cargando ? "Consultando los astros..." : `✨ Revelar mi horóscopo de hoy`}
               </button>
             )}
           </div>
         )}
 
+        {/* ─── TAROT ─── */}
         {tab==="tarot" && (
           <div style={s.card}>
-            <p style={{textAlign:"center",color:C.text2,fontSize:14,marginTop:0}}>
-              Concéntrate en tu pregunta y elige 3 cartas <span style={s.premium}>PREMIUM</span>
-            </p>
+            <h2 style={s.cardTitle}>Lectura de Tarot <span style={s.premium}>PREMIUM</span></h2>
+            <p style={s.cardSub}>Concéntrate en tu pregunta y deja que las cartas te elijan</p>
             <input style={s.input} placeholder="¿Qué quieres preguntarle al oráculo? (opcional)" value={pregunta} onChange={e=>setPregunta(e.target.value)}/>
             <div style={s.cartaWrap}>
               {mazo.map(c=>(
@@ -392,18 +442,18 @@ export default function App() {
               {cartasSel.length}/3 cartas elegidas {cartasSel.length===3 && "— Pasado · Presente · Futuro"}
             </p>
             {cartasSel.length===3 && (
-              <button style={s.btnViolet} onClick={()=>consultar({tipo:"tarot",cartas:cartasSel,pregunta})} disabled={cargando}>
+              <button style={s.btnViolet} onClick={()=>consultarLectura({tipo:"tarot",cartas:cartasSel,pregunta})} disabled={cargando}>
                 {cargando ? "Las cartas hablan..." : "🃏 Revelar mi lectura"}
               </button>
             )}
           </div>
         )}
 
+        {/* ─── COMPATIBILIDAD ─── */}
         {tab==="compatibilidad" && (
           <div style={s.card}>
-            <p style={{textAlign:"center",color:C.text2,fontSize:14,marginTop:0}}>
-              Descubre la química entre dos almas <span style={s.premium}>PREMIUM</span>
-            </p>
+            <h2 style={s.cardTitle}>Compatibilidad de Pareja <span style={s.premium}>PREMIUM</span></h2>
+            <p style={s.cardSub}>Descubre la química real entre dos almas</p>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div>
                 <input style={s.input} placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)}/>
@@ -421,7 +471,7 @@ export default function App() {
               </div>
             </div>
             {signo && signo2 && (
-              <button style={s.btnViolet} onClick={()=>consultar({tipo:"compatibilidad",signo,signo2,nombre,nombre2})} disabled={cargando}>
+              <button style={s.btnViolet} onClick={()=>consultarLectura({tipo:"compatibilidad",signo,signo2,nombre,nombre2})} disabled={cargando}>
                 {cargando ? "Leyendo sus estrellas..." : "💕 Revelar compatibilidad"}
               </button>
             )}
@@ -430,55 +480,56 @@ export default function App() {
 
         {cargando && <div style={s.loading}>🔮 El oráculo está consultando el cosmos...</div>}
         {error && <div style={s.error}>{error}</div>}
-        {sinSub && (
-          <div style={s.aviso}>
-            ⭐ Tu cuenta <strong>{user?.email}</strong> aún no tiene una suscripción activa.<br/>
-            Suscríbete abajo usando <strong>este mismo correo</strong> en MercadoPago y tendrás acceso inmediato.<br/>
-            ¿Ya pagaste? El cobro puede tardar unos minutos en confirmarse. <a href={`https://wa.me/${WHATSAPP}`} style={{color:C.violetL}}>Contáctanos si necesitas ayuda</a>.
-          </div>
-        )}
+        {sinSub && <SuscripcionCTA titulo="Esta función es exclusiva para suscriptores"/>}
         {lectura && <div style={s.lectura}>{lectura}</div>}
 
-        <div style={{...s.card,marginTop:36,border:`1px solid rgba(240,199,94,0.4)`}}>
+        {/* ─── PLAN ─── */}
+        <div style={{...s.card,marginTop:40,border:`1px solid rgba(232,195,106,0.4)`,boxShadow:"0 18px 50px rgba(0,0,0,0.45), 0 0 60px rgba(232,195,106,0.06)"}}>
           <div style={s.precio}>
-            <div style={{fontSize:13,color:C.text3,letterSpacing:2,marginBottom:6}}>ACCESO PREMIUM</div>
+            <div style={{fontSize:12,color:C.text3,letterSpacing:3,marginBottom:8,fontWeight:600}}>ACCESO PREMIUM</div>
             <span style={s.precioNum}>${PRECIO}</span>
-            <span style={{fontSize:16,color:C.text2}}> MXN/mes</span>
+            <span style={{fontSize:17,color:C.text2}}> MXN/mes</span>
+            <div style={{fontSize:13,color:C.text3,marginTop:6,fontStyle:"italic"}}>menos que dos cafés ☕</div>
           </div>
+          <div style={s.feature}><span>⚽</span><span><strong style={{color:C.text}}>Predicciones ilimitadas del Mundial 2026</strong> con tarjetas para compartir</span></div>
           <div style={s.feature}><span>🃏</span><span>Lecturas de tarot ilimitadas con interpretación personalizada</span></div>
           <div style={s.feature}><span>💕</span><span>Análisis de compatibilidad con quien tú quieras</span></div>
           <div style={s.feature}><span>⚡</span><span>Respuestas al instante, 24/7, sin citas ni esperas</span></div>
           <div style={s.feature}><span>🔐</span><span>100% privado — nadie más ve tus consultas</span></div>
           <a href={MP_LINK} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
-            <button style={s.btnGold}>⭐ Suscribirme ahora</button>
+            <button style={s.btnGold}>⭐ Comenzar por ${PRECIO}/mes</button>
           </a>
-          <p style={{textAlign:"center",fontSize:12,color:C.text3,marginTop:14}}>
-            ⚠️ Importante: paga en MercadoPago con el <strong style={{color:C.gold}}>mismo correo</strong> de tu cuenta del Oráculo.<br/>
-            Tu acceso se activa automáticamente al confirmarse el pago.
+          <p style={{textAlign:"center",fontSize:12,color:C.text3,marginTop:16,lineHeight:1.7}}>
+            ⚠️ Paga en MercadoPago con el <strong style={{color:C.goldL}}>mismo correo</strong> de tu cuenta del Oráculo.<br/>
+            Tu acceso se activa automáticamente al confirmarse el pago. Cancela cuando quieras.
           </p>
         </div>
 
         <div style={s.footer}>
           🔮 Oráculo IA · Entretenimiento y orientación espiritual<br/>
-          Las lecturas son generadas con inteligencia artificial y no sustituyen consejo profesional.
+          Las lecturas son generadas con inteligencia artificial y no sustituyen consejo profesional.<br/>
+          ¿Necesitas ayuda? <a href={`https://wa.me/${WHATSAPP}`} style={{color:C.violetL}}>Escríbenos por WhatsApp</a>
         </div>
 
       </div>
 
-      {/* ─── MODAL LOGIN/REGISTRO ─── */}
+      {/* ─── MODAL AUTH ─── */}
       {showAuth && (
         <div style={s.modal} onClick={()=>setShowAuth(false)}>
           <div style={s.modalCard} onClick={e=>e.stopPropagation()}>
-            <h2 style={{color:C.gold,marginTop:0,fontSize:20,textAlign:"center"}}>
-              {authMode==="login" ? "🌙 Iniciar sesión" : "✨ Crear cuenta"}
+            <h2 style={{color:C.gold,marginTop:0,fontSize:23,textAlign:"center",fontFamily:FH}}>
+              {authMode==="login" ? "🌙 Iniciar sesión" : "✨ Crear cuenta gratis"}
             </h2>
+            {authMode==="registro" && (
+              <p style={{textAlign:"center",fontSize:13,color:C.ok,marginTop:-6}}>Incluye 2 predicciones del Mundial de regalo 🎁</p>
+            )}
             <input style={s.input} type="email" placeholder="Correo electrónico" value={email} onChange={e=>setEmail(e.target.value)}/>
             <input style={s.input} type="password" placeholder="Contraseña" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&autenticar()}/>
             {authError && <div style={{...s.error,marginTop:4,marginBottom:10}}>{authError}</div>}
-            <button style={{...s.btnViolet,margin:"8px auto 0",width:"100%"}} onClick={autenticar}>
+            <button style={{...s.btnViolet,margin:"10px auto 0",width:"100%"}} onClick={autenticar}>
               {authMode==="login" ? "Entrar" : "Crear mi cuenta"}
             </button>
-            <p style={{textAlign:"center",fontSize:13,color:C.text3,marginTop:16}}>
+            <p style={{textAlign:"center",fontSize:13,color:C.text3,marginTop:18}}>
               {authMode==="login" ? (
                 <>¿No tienes cuenta? <button style={s.linkBtn} onClick={()=>{setAuthMode("registro");setAuthError("")}}>Regístrate gratis</button></>
               ) : (

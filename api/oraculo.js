@@ -1,30 +1,48 @@
-// Verifica el idToken de Firebase y devuelve el email del usuario
+// ─── Verifica el idToken de Firebase → { uid, email } ───
 async function verificarUsuario(idToken) {
   const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY
   const r = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    }
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) }
   )
   const d = await r.json()
   if (!r.ok || !d.users?.[0]) return null
-  return d.users[0].email
+  return { uid: d.users[0].localId, email: d.users[0].email }
 }
 
-// Consulta MercadoPago si el email tiene una suscripción activa (authorized)
+// ─── Suscripción activa en MercadoPago ───
 async function suscripcionActiva(email) {
   const MP_TOKEN = process.env.MP_ACCESS_TOKEN
   if (!MP_TOKEN) return false
-  const r = await fetch(
-    `https://api.mercadopago.com/preapproval/search?payer_email=${encodeURIComponent(email)}&status=authorized`,
-    { headers: { Authorization: `Bearer ${MP_TOKEN}` } }
-  )
-  const d = await r.json()
-  return (d.results || []).some(s => s.status === 'authorized')
+  try {
+    const r = await fetch(
+      `https://api.mercadopago.com/preapproval/search?payer_email=${encodeURIComponent(email)}&status=authorized`,
+      { headers: { Authorization: `Bearer ${MP_TOKEN}` } }
+    )
+    const d = await r.json()
+    return (d.results || []).some(s => s.status === 'authorized')
+  } catch(e) { return false }
 }
+
+// ─── Contador de predicciones gratis en Firestore (vía REST con el idToken del usuario) ───
+const fsUrl = (uid) => `https://firestore.googleapis.com/v1/projects/${process.env.FIREBASE_PROJECT_ID}/databases/(default)/documents/predicciones/${uid}`
+
+async function leerContador(uid, idToken) {
+  const r = await fetch(fsUrl(uid), { headers: { Authorization: `Bearer ${idToken}` } })
+  if (r.status === 404) return 0
+  const d = await r.json()
+  return parseInt(d.fields?.count?.integerValue || '0')
+}
+
+async function incrementarContador(uid, idToken, nuevo) {
+  await fetch(fsUrl(uid), {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { count: { integerValue: String(nuevo) } } }),
+  })
+}
+
+const GRATIS = 2 // predicciones de regalo por cuenta
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -35,26 +53,35 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' })
 
   try {
-    const { tipo, signo, signo2, nombre, nombre2, cartas, pregunta, idToken } = req.body
+    const { tipo, signo, signo2, nombre, nombre2, cartas, pregunta, idToken,
+            equipo1, equipo2, fechaNac, nombreUsuario, colorFav } = req.body
 
     const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
     if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Servicio no configurado' })
 
-    // ── Funciones premium: verificar usuario + suscripción activa en MercadoPago ──
-    const esPremium = ['tarot', 'compatibilidad'].includes(tipo)
-    if (esPremium) {
+    let usuario = null
+    let restantes = null
+
+    // ─── Tipos que requieren cuenta ───
+    if (['mundial', 'tarot', 'compatibilidad'].includes(tipo)) {
       if (!idToken) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
+      usuario = await verificarUsuario(idToken)
+      if (!usuario) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
 
-      const email = await verificarUsuario(idToken)
-      if (!email) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
-
-      // Códigos VIP manuales (cortesías, influencers) — opcional
       const vips = (process.env.VIP_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-      const esVip = vips.includes(email.toLowerCase())
+      const esVip = vips.includes(usuario.email.toLowerCase())
+      const premium = esVip || await suscripcionActiva(usuario.email)
 
-      if (!esVip) {
-        const activa = await suscripcionActiva(email)
-        if (!activa) return res.status(403).json({ error: 'SIN_SUSCRIPCION', email })
+      if (tipo === 'mundial') {
+        // Mundial: 2 gratis por cuenta, luego requiere suscripción
+        if (!premium) {
+          const usadas = await leerContador(usuario.uid, idToken)
+          if (usadas >= GRATIS) return res.status(403).json({ error: 'PREDICCIONES_AGOTADAS' })
+          restantes = GRATIS - usadas - 1
+        }
+      } else {
+        // Tarot y compatibilidad: solo premium
+        if (!premium) return res.status(403).json({ error: 'SIN_SUSCRIPCION', email: usuario.email })
       }
     }
 
@@ -64,13 +91,12 @@ export default async function handler(req, res) {
     if (tipo === 'horoscopo') {
       if (!signo) return res.status(400).json({ error: 'Falta el signo' })
       prompt = `Eres un astrólogo místico y cálido. Escribe el horóscopo de HOY (${hoy}) para ${signo}. Estructura: AMOR: [2 frases] DINERO: [2 frases] SALUD: [2 frases] CONSEJO DEL DÍA: [1 frase poderosa] NÚMERO DE LA SUERTE: [número] COLOR: [color]. Tono: místico pero esperanzador, español mexicano natural. NO uses markdown ni asteriscos.`
+    } else if (tipo === 'mundial') {
+      if (!equipo1 || !equipo2) return res.status(400).json({ error: 'Falta el partido' })
+      prompt = `Eres un oráculo místico futbolero, divertido y carismático. Predice el resultado de ${equipo1} vs ${equipo2} del Mundial 2026 usando EXCLUSIVAMENTE la numerología y energía mística de quien consulta: Nombre: ${nombreUsuario || 'el consultante'}, Fecha de nacimiento: ${fechaNac || 'desconocida'}, Color favorito: ${colorFav || 'desconocido'}. Suma dígitos, conecta vibras, inventa conexiones místicas divertidas pero convincentes. Formato EXACTO: GANADOR: [equipo o Empate] MARCADOR: [X-Y] LA SEÑAL: [cómo sus datos místicos revelan este resultado, 2-3 frases divertidas] MINUTO CLAVE: [minuto] AMULETO DEL PARTIDO: [objeto cotidiano gracioso] FRASE DEL ORÁCULO: [1 frase épica para compartir]. Español mexicano festivo. NO uses markdown ni asteriscos.`
     } else if (tipo === 'tarot') {
       if (!cartas || cartas.length !== 3) return res.status(400).json({ error: 'Se requieren 3 cartas' })
       prompt = `Eres una tarotista experta y empática. El consultante preguntó: "${pregunta || 'orientación general sobre mi vida'}". Sacó estas 3 cartas: PASADO: ${cartas[0]}, PRESENTE: ${cartas[1]}, FUTURO: ${cartas[2]}. Da una lectura profunda conectando las 3 cartas con su pregunta. Estructura: EL PASADO: [interpretación] EL PRESENTE: [interpretación] EL FUTURO: [interpretación] MENSAJE DEL ORÁCULO: [síntesis poderosa y esperanzadora, 2-3 frases]. Español mexicano cálido, místico. NO uses markdown ni asteriscos.`
-    } else if (tipo === 'mundial') {
-      const { equipo1, equipo2, fechaNac, telefono, nombreUsuario, colorFav } = req.body
-      if (!equipo1 || !equipo2) return res.status(400).json({ error: 'Falta el partido' })
-      prompt = `Eres un oráculo místico futbolero, divertido y carismático. Predice el resultado de ${equipo1} vs ${equipo2} del Mundial 2026 usando EXCLUSIVAMENTE la numerología y energía mística de quien consulta: Nombre: ${nombreUsuario || 'el consultante'}, Fecha de nacimiento: ${fechaNac || 'desconocida'}, Teléfono: ${telefono ? telefono.slice(-4) : 'desconocido'} (últimos dígitos), Color favorito: ${colorFav || 'desconocido'}. Suma dígitos, conecta vibras, inventa conexiones místicas divertidas pero convincentes. Formato EXACTO: GANADOR: [equipo o Empate] MARCADOR: [X-Y] LA SEÑAL: [cómo sus datos místicos revelan este resultado, 2-3 frases divertidas] MINUTO CLAVE: [minuto] AMULETO DEL PARTIDO: [objeto cotidiano gracioso] FRASE DEL ORÁCULO: [1 frase épica para compartir]. Español mexicano festivo. NO uses markdown ni asteriscos.`
     } else if (tipo === 'compatibilidad') {
       if (!signo || !signo2) return res.status(400).json({ error: 'Faltan los signos' })
       prompt = `Eres un astrólogo experto en relaciones. Analiza la compatibilidad entre ${nombre || 'Persona 1'} (${signo}) y ${nombre2 || 'Persona 2'} (${signo2}). Estructura: QUÍMICA: [porcentaje]% — [2 frases] FORTALEZAS: [2-3 puntos] DESAFÍOS: [2 puntos] CONSEJO PARA LA PAREJA: [2 frases] VEREDICTO DEL ORÁCULO: [1 frase memorable]. Español mexicano, tono divertido pero con sustancia. NO uses markdown ni asteriscos.`
@@ -100,7 +126,14 @@ export default async function handler(req, res) {
     if (!response.ok) return res.status(500).json({ error: data.error?.message || 'El oráculo está descansando, intenta en un momento' })
 
     const lectura = data.content?.filter(c => c.type === 'text').map(c => c.text).join('') || ''
-    return res.status(200).json({ lectura })
+
+    // Incrementar contador de gratis (solo mundial no-premium)
+    if (tipo === 'mundial' && restantes !== null && usuario) {
+      const usadas = GRATIS - restantes - 1
+      await incrementarContador(usuario.uid, idToken, usadas + 1)
+    }
+
+    return res.status(200).json({ lectura, restantes })
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
