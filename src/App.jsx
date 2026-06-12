@@ -3,7 +3,7 @@ import { auth } from "./firebase"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth"
 
 // ⚙️ CONFIGURA AQUÍ TU LINK DE SUSCRIPCIÓN DE MERCADOPAGO
-const MP_LINK = "https://www.mercadopago.com.mx/subscriptions/checkout?preapproval_plan_id=84e865c0e6894b5a95d8db4151cd353e" // ← Reemplaza con tu link real
+const MP_LINK = "https://www.mercadopago.com.mx/subscriptions" // ← Reemplaza con tu link real
 const WHATSAPP = "5219931598038"
 const PRECIO = "49"
 
@@ -227,8 +227,7 @@ export default function App() {
     }
   }
 
-  const descargarTarjeta = async () => {
-    if (!prediccion || !partido) return
+  const generarCanvas = async () => {
     const canvas = document.createElement("canvas")
     canvas.width = 1080; canvas.height = 1350
     const ctx = canvas.getContext("2d")
@@ -290,10 +289,34 @@ export default function App() {
     ctx.fillStyle = "#C4ADFF"; ctx.font = "bold 34px Georgia"
     ctx.fillText(window.location.host, 540, 1292)
 
+    return canvas
+  }
+
+  const descargarTarjeta = async () => {
+    if (!prediccion || !partido) return
+    const canvas = await generarCanvas()
     const link = document.createElement("a")
     link.download = `prediccion-${partido.e1}-vs-${partido.e2}.png`
     link.href = canvas.toDataURL("image/png")
     link.click()
+  }
+
+  const compartirWhatsApp = async () => {
+    if (!prediccion || !partido) return
+    const texto = `🔮 El Oráculo predice: ${partido.e1} ${prediccion.g1} - ${prediccion.g2} ${partido.e2} (${partido.f})\n⚽ Haz tu predicción GRATIS en https://${window.location.host}?ref=wa`
+    try {
+      const canvas = await generarCanvas()
+      const blob = await new Promise(res => canvas.toBlob(res, "image/png"))
+      const file = new File([blob], `prediccion-${partido.e1}-vs-${partido.e2}.png`, { type: "image/png" })
+      // En móviles: comparte la imagen directamente (WhatsApp aparece en el menú)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: texto })
+        return
+      }
+    } catch(e) { /* usuario canceló o no soportado, caer al fallback */ }
+    // Fallback escritorio: descarga la tarjeta y abre WhatsApp con el texto
+    await descargarTarjeta()
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank")
   }
 
   const toggleCarta = (c) => {
@@ -394,9 +417,14 @@ export default function App() {
                 {restantes !== null && restantes >= 0 && (
                   <p style={s.contador}>✨ Te queda{restantes===1?"":"n"} {restantes} predicción{restantes===1?"":"es"} gratis</p>
                 )}
-                <button style={s.btnViolet} onClick={descargarTarjeta}>
-                  📲 Descargar tarjeta para compartir
-                </button>
+                <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginTop:"1.6rem"}}>
+                  <button style={{...s.btnViolet,margin:0,padding:"14px 26px",background:"linear-gradient(135deg, #25D366, #128C7E)",boxShadow:"0 10px 30px rgba(37,211,102,0.35)"}} onClick={compartirWhatsApp}>
+                    💬 Compartir por WhatsApp
+                  </button>
+                  <button style={{...s.btnViolet,margin:0,padding:"14px 26px"}} onClick={descargarTarjeta}>
+                    📲 Descargar tarjeta
+                  </button>
+                </div>
               </>
             )}
             {agotadas && <SuscripcionCTA titulo="Tus 2 predicciones gratis se agotaron"/>}
