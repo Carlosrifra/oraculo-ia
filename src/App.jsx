@@ -3,7 +3,7 @@ import { auth } from "./firebase"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth"
 
 // ⚙️ CONFIGURA AQUÍ TU LINK DE SUSCRIPCIÓN DE MERCADOPAGO
-const MP_LINK = "https://www.mercadopago.com.mx/subscriptions" // ← Reemplaza con tu link real
+const MP_LINK = "https://www.mercadopago.com.mx/subscriptions/checkout?preapproval_plan_id=84e865c0e6894b5a95d8db4151cd353e" // ← Reemplaza con tu link real
 const WHATSAPP = "5219931598038"
 const PRECIO = "49"
 
