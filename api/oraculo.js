@@ -44,6 +44,21 @@ async function incrementarContador(uid, idToken, nuevo) {
 
 const GRATIS = 2 // predicciones de regalo por cuenta
 
+// ─── Numerología real: el marcador sale de los datos del usuario (determinista y variado) ───
+function marcadorNumerologico(equipo1, equipo2, nombre, fechaNac, colorFav) {
+  const semilla = `${equipo1}|${equipo2}|${(nombre||'').toLowerCase().trim()}|${fechaNac||''}|${(colorFav||'').toLowerCase().trim()}`
+  let h = 0
+  for (let i = 0; i < semilla.length; i++) {
+    h = (h * 31 + semilla.charCodeAt(i)) >>> 0
+  }
+  // Distribución realista de goles: 0 y 1 comunes, 2 frecuente, 3-4 ocasionales
+  const dist = [0,0,1,1,1,1,2,2,2,3,3,4]
+  const g1 = dist[h % dist.length]
+  const g2 = dist[Math.floor(h / 13) % dist.length]
+  const minuto = 1 + (Math.floor(h / 7) % 90)
+  return { g1, g2, minuto }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -93,7 +108,9 @@ export default async function handler(req, res) {
       prompt = `Eres un astrólogo místico y cálido. Escribe el horóscopo de HOY (${hoy}) para ${signo}. Estructura: AMOR: [2 frases] DINERO: [2 frases] SALUD: [2 frases] CONSEJO DEL DÍA: [1 frase poderosa] NÚMERO DE LA SUERTE: [número] COLOR: [color]. Tono: místico pero esperanzador, español mexicano natural. NO uses markdown ni asteriscos.`
     } else if (tipo === 'mundial') {
       if (!equipo1 || !equipo2) return res.status(400).json({ error: 'Falta el partido' })
-      prompt = `Eres un oráculo místico futbolero, divertido y carismático. Predice el resultado de ${equipo1} vs ${equipo2} del Mundial 2026 usando EXCLUSIVAMENTE la numerología y energía mística de quien consulta: Nombre: ${nombreUsuario || 'el consultante'}, Fecha de nacimiento: ${fechaNac || 'desconocida'}, Color favorito: ${colorFav || 'desconocido'}. Suma dígitos, conecta vibras, inventa conexiones místicas divertidas pero convincentes. Formato EXACTO: GANADOR: [equipo o Empate] MARCADOR: [X-Y] LA SEÑAL: [cómo sus datos místicos revelan este resultado, 2-3 frases divertidas] MINUTO CLAVE: [minuto] AMULETO DEL PARTIDO: [objeto cotidiano gracioso] FRASE DEL ORÁCULO: [1 frase épica para compartir]. Español mexicano festivo. NO uses markdown ni asteriscos.`
+      const { g1, g2, minuto } = marcadorNumerologico(equipo1, equipo2, nombreUsuario, fechaNac, colorFav)
+      const ganador = g1 > g2 ? equipo1 : g2 > g1 ? equipo2 : 'Empate'
+      prompt = `Eres un oráculo místico futbolero, divertido y carismático. La numerología YA reveló el resultado de ${equipo1} vs ${equipo2} del Mundial 2026: GANADOR ${ganador}, MARCADOR ${g1}-${g2}, MINUTO CLAVE ${minuto}. Tu trabajo es justificar místicamente ese resultado EXACTO con los datos del consultante: Nombre: ${nombreUsuario || 'el consultante'}, Fecha de nacimiento: ${fechaNac || 'desconocida'}, Color favorito: ${colorFav || 'desconocido'}. Suma dígitos de su fecha, conecta las letras de su nombre, vincula su color con la energía del partido — inventa conexiones divertidas pero convincentes que lleven a ESE marcador. Formato EXACTO: GANADOR: ${ganador} MARCADOR: ${g1}-${g2} LA SEÑAL: [cómo sus datos místicos revelan este resultado, 2-3 frases divertidas] MINUTO CLAVE: ${minuto} AMULETO DEL PARTIDO: [objeto cotidiano gracioso] FRASE DEL ORÁCULO: [1 frase épica para compartir]. Español mexicano festivo. NO uses markdown ni asteriscos. Respeta el marcador ${g1}-${g2} sin cambiarlo.`
     } else if (tipo === 'tarot') {
       if (!cartas || cartas.length !== 3) return res.status(400).json({ error: 'Se requieren 3 cartas' })
       prompt = `Eres una tarotista experta y empática. El consultante preguntó: "${pregunta || 'orientación general sobre mi vida'}". Sacó estas 3 cartas: PASADO: ${cartas[0]}, PRESENTE: ${cartas[1]}, FUTURO: ${cartas[2]}. Da una lectura profunda conectando las 3 cartas con su pregunta. Estructura: EL PASADO: [interpretación] EL PRESENTE: [interpretación] EL FUTURO: [interpretación] MENSAJE DEL ORÁCULO: [síntesis poderosa y esperanzadora, 2-3 frases]. Español mexicano cálido, místico. NO uses markdown ni asteriscos.`
