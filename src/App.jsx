@@ -3,7 +3,7 @@ import { auth } from "./firebase"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth"
 
 // ⚙️ CONFIGURA AQUÍ TU LINK DE SUSCRIPCIÓN DE MERCADOPAGO
-const MP_LINK = "https://www.mercadopago.com.mx/subscriptions/checkout?preapproval_plan_id=84e865c0e6894b5a95d8db4151cd353e" // ← Reemplaza con tu link real
+const MP_LINK = "https://www.mercadopago.com.mx/subscriptions" // ← Reemplaza con tu link real
 const WHATSAPP = "5219931598038"
 const PRECIO = "49"
 
@@ -87,6 +87,17 @@ const PARTIDOS = [
   {f:"23 jun",h:"20:00",e1:"Colombia",c1:"co",e2:"RD Congo",c2:"cd",sede:"Guadalajara"},
 ]
 const bandera = (c) => `https://flagcdn.com/w160/${c}.png`
+
+// ─── Determina si un partido ya terminó (hora MX = UTC-6). Se bloquea ~2h después del inicio ───
+const MESES = { ene:0, feb:1, mar:2, abr:3, may:4, jun:5, jul:6, ago:7, sep:8, oct:9, nov:10, dic:11 }
+const partidoTerminado = (p) => {
+  const [dia, mes] = p.f.split(" ")
+  const [hh, mm] = p.h.split(":").map(Number)
+  // Construye la fecha del partido en zona horaria de México (UTC-6)
+  const inicioUTC = Date.UTC(2026, MESES[mes.toLowerCase()], parseInt(dia), hh + 6, mm)
+  const finMs = inicioUTC + 2 * 60 * 60 * 1000 // 2 horas de duración estimada
+  return Date.now() > finMs
+}
 
 const s = {
   wrap:{minHeight:"100vh",background:`radial-gradient(900px 500px at 50% -8%, rgba(109,77,212,0.28), transparent 60%), radial-gradient(700px 400px at 85% 20%, rgba(232,195,106,0.07), transparent 55%), ${C.bg}`,color:C.text,fontFamily:FB,paddingBottom:80},
@@ -372,16 +383,20 @@ export default function App() {
             <h2 style={s.cardTitle}>El Oráculo del Mundial <span style={s.gratis}>2 GRATIS</span></h2>
             <p style={s.cardSub}>El cosmos lee TU energía personal para revelar el marcador.<br/>Elige un partido del calendario oficial:</p>
             <div style={{maxHeight:310,overflowY:"auto",border:`1px solid ${C.glassBorder}`,borderRadius:14}}>
-              {PARTIDOS.map((p,i)=>(
-                <div key={i} onClick={()=>setPartido(p)} style={{...s.partidoRow,background:partido===p?"rgba(232,195,106,0.1)":"transparent"}}>
+              {[...PARTIDOS].sort((a,b)=>partidoTerminado(a)-partidoTerminado(b)).map((p,i)=>{
+                const terminado = partidoTerminado(p)
+                return (
+                <div key={i} onClick={()=>!terminado&&setPartido(p)} style={{...s.partidoRow,background:partido===p?"rgba(232,195,106,0.1)":"transparent",opacity:terminado?0.4:1,cursor:terminado?"not-allowed":"pointer"}}>
                   <span style={{fontSize:11,color:C.text3,width:54,flexShrink:0,lineHeight:1.5}}>{p.f}<br/>{p.h}</span>
-                  <img src={bandera(p.c1)} alt="" style={s.flag}/>
+                  <img src={bandera(p.c1)} alt="" style={{...s.flag,filter:terminado?"grayscale(1)":"none"}}/>
                   <span style={{fontSize:13.5,flex:1,textAlign:"right",fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e1}</span>
-                  <span style={{fontSize:11,color:C.text3}}>vs</span>
+                  {terminado
+                    ? <span style={{fontSize:9,color:C.text3,border:`1px solid ${C.text3}`,borderRadius:6,padding:"2px 6px",whiteSpace:"nowrap"}}>FINALIZADO</span>
+                    : <span style={{fontSize:11,color:C.text3}}>vs</span>}
                   <span style={{fontSize:13.5,flex:1,fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e2}</span>
-                  <img src={bandera(p.c2)} alt="" style={s.flag}/>
+                  <img src={bandera(p.c2)} alt="" style={{...s.flag,filter:terminado?"grayscale(1)":"none"}}/>
                 </div>
-              ))}
+              )})}
             </div>
             {partido && !user && (
               <div style={{textAlign:"center",marginTop:20}}>
