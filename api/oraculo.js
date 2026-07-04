@@ -43,6 +43,29 @@ async function incrementarContador(uid, idToken, nuevo) {
 }
 
 const GRATIS = 2 // predicciones de regalo por cuenta
+const LIMITE_GLOBAL_DIARIO = parseInt(process.env.LIMITE_GLOBAL_DIARIO || '800') // tope de consultas gratis/día en toda la app
+
+// ─── Contador global diario (documento admin en Firestore) ───
+const hoyClave = () => new Date().toISOString().slice(0,10) // "2026-06-18"
+const globalUrl = () => `https://firestore.googleapis.com/v1/projects/${process.env.FIREBASE_PROJECT_ID}/databases/(default)/documents/global/${hoyClave()}`
+
+async function leerGlobal(idToken) {
+  try {
+    const r = await fetch(globalUrl(), { headers: { Authorization: `Bearer ${idToken}` } })
+    if (r.status === 404) return 0
+    const d = await r.json()
+    return parseInt(d.fields?.count?.integerValue || '0')
+  } catch(e) { return 0 }
+}
+async function incrementarGlobal(idToken, actual) {
+  try {
+    await fetch(globalUrl(), {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { count: { integerValue: String(actual + 1) } } }),
+    })
+  } catch(e) { /* no romper la experiencia si falla el contador */ }
+}
 
 // ─── Numerología real: el marcador sale de los datos del usuario (determinista y variado) ───
 function marcadorNumerologico(equipo1, equipo2, nombre, fechaNac, colorFav) {
@@ -76,28 +99,35 @@ export default async function handler(req, res) {
 
     let usuario = null
     let restantes = null
+    let premium = false
 
-    // ─── Tipos que requieren cuenta ───
-    if (['mundial', 'tarot', 'compatibilidad'].includes(tipo)) {
-      if (!idToken) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
-      usuario = await verificarUsuario(idToken)
-      if (!usuario) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
+    // ─── TODO requiere cuenta (cierra el hueco del horóscopo anónimo) ───
+    if (!idToken) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
+    usuario = await verificarUsuario(idToken)
+    if (!usuario) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
 
-      const vips = (process.env.VIP_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-      const esVip = vips.includes(usuario.email.toLowerCase())
-      const premium = esVip || await suscripcionActiva(usuario.email)
+    const vips = (process.env.VIP_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+    const esVip = vips.includes(usuario.email.toLowerCase())
+    premium = esVip || await suscripcionActiva(usuario.email)
 
-      if (tipo === 'mundial') {
-        // Mundial: 2 gratis por cuenta, luego requiere suscripción
-        if (!premium) {
-          const usadas = await leerContador(usuario.uid, idToken)
-          if (usadas >= GRATIS) return res.status(403).json({ error: 'PREDICCIONES_AGOTADAS' })
-          restantes = GRATIS - usadas - 1
-        }
-      } else {
-        // Tarot y compatibilidad: solo premium
-        if (!premium) return res.status(403).json({ error: 'SIN_SUSCRIPCION', email: usuario.email })
+    // ─── Capa 1: límite global diario para usuarios NO premium ───
+    let usoGlobal = 0
+    if (!premium) {
+      usoGlobal = await leerGlobal(idToken)
+      if (usoGlobal >= LIMITE_GLOBAL_DIARIO) {
+        return res.status(429).json({ error: 'LIMITE_DIARIO' })
       }
+    }
+
+    // ─── Mundial: además, 2 gratis por cuenta ───
+    if (tipo === 'mundial' && !premium) {
+      const usadas = await leerContador(usuario.uid, idToken)
+      if (usadas >= GRATIS) return res.status(403).json({ error: 'PREDICCIONES_AGOTADAS' })
+      restantes = GRATIS - usadas - 1
+    }
+    // ─── Tarot y compatibilidad: solo premium ───
+    if (['tarot', 'compatibilidad'].includes(tipo) && !premium) {
+      return res.status(403).json({ error: 'SIN_SUSCRIPCION', email: usuario.email })
     }
 
     let prompt = ''
@@ -148,6 +178,10 @@ export default async function handler(req, res) {
     if (tipo === 'mundial' && restantes !== null && usuario) {
       const usadas = GRATIS - restantes - 1
       await incrementarContador(usuario.uid, idToken, usadas + 1)
+    }
+    // Incrementar contador GLOBAL diario (toda consulta de no-premium)
+    if (!premium && usuario) {
+      await incrementarGlobal(idToken, usoGlobal)
     }
 
     return res.status(200).json({ lectura, restantes })

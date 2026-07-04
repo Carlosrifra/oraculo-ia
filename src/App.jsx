@@ -86,6 +86,16 @@ const PARTIDOS = [
   {f:"23 jun",h:"17:00",e1:"Panamá",c1:"pa",e2:"Croacia",c2:"hr",sede:"Toronto"},
   {f:"23 jun",h:"20:00",e1:"Colombia",c1:"co",e2:"RD Congo",c2:"cd",sede:"Guadalajara"},
 ]
+
+// Rondas de eliminación — se desbloquean cuando se definan los cruces reales
+const RONDAS = [
+  { nombre:"Dieciseisavos de Final", fechas:"28 jun – 3 jul", desc:"Los 32 mejores del torneo" },
+  { nombre:"Octavos de Final", fechas:"4 – 7 jul", desc:"Los 16 sobrevivientes" },
+  { nombre:"Cuartos de Final", fechas:"9 – 11 jul", desc:"Los 8 gigantes" },
+  { nombre:"Semifinales", fechas:"14 – 15 jul", desc:"Los 4 elegidos" },
+  { nombre:"Final", fechas:"19 jul", desc:"El destino del campeón", corona:true },
+]
+
 const bandera = (c) => `https://flagcdn.com/w160/${c}.png`
 
 // ─── Determina si un partido ya terminó (hora MX = UTC-6). Se bloquea ~2h después del inicio ───
@@ -208,6 +218,8 @@ export default function App() {
         setSinSub(true)
       } else if (d.error === "PREDICCIONES_AGOTADAS") {
         setAgotadas(true)
+      } else if (d.error === "LIMITE_DIARIO") {
+        setError("🌙 El oráculo ha recibido muchísimas consultas hoy y necesita descansar. Los suscriptores premium no tienen límite. Vuelve mañana o desbloquea acceso ilimitado abajo.")
       } else if (d.error) {
         setError(d.error)
       } else {
@@ -443,6 +455,31 @@ export default function App() {
               </>
             )}
             {agotadas && <SuscripcionCTA titulo="Tus 2 predicciones gratis se agotaron"/>}
+
+            <div style={{marginTop:28,paddingTop:24,borderTop:`1px solid ${C.glassBorder}`}}>
+              <p style={{textAlign:"center",fontSize:13,color:C.violetL,fontFamily:FH,fontStyle:"italic",marginBottom:16}}>
+                🏆 La Fase Final se aproxima — el oráculo la revelará a su tiempo
+              </p>
+              <div style={{display:"grid",gap:10}}>
+                {RONDAS.map((r,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",background:"rgba(10,8,20,0.5)",border:`1px solid ${r.corona?"rgba(232,195,106,0.35)":C.glassBorder}`,borderRadius:14,opacity:0.85}}>
+                    <span style={{fontSize:24,filter:"grayscale(0.3)"}}>{r.corona?"👑":"🔒"}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:14.5,fontWeight:600,color:r.corona?C.gold:C.text,fontFamily:FH}}>{r.nombre}</div>
+                      <div style={{fontSize:11.5,color:C.text3,marginTop:2}}>{r.desc}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:12,color:C.text2,fontWeight:600}}>{r.fechas}</div>
+                      <div style={{fontSize:10,color:C.violetL,marginTop:2,letterSpacing:0.5}}>PRÓXIMAMENTE</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p style={{textAlign:"center",fontSize:11.5,color:C.text3,marginTop:14,lineHeight:1.6}}>
+                Cuando se definan los cruces, podrás predecir cada partido de eliminación.<br/>
+                Sigue al oráculo para no perderte tu predicción de la Final. 🔮
+              </p>
+            </div>
           </div>
         )}
 
@@ -461,8 +498,8 @@ export default function App() {
               ))}
             </div>
             {signo && (
-              <button style={s.btnGold} onClick={()=>consultarLectura({tipo:"horoscopo",signo})} disabled={cargando}>
-                {cargando ? "Consultando los astros..." : `✨ Revelar mi horóscopo de hoy`}
+              <button style={s.btnGold} onClick={()=>{ if(!user){setShowAuth(true);setAuthMode("registro");return} consultarLectura({tipo:"horoscopo",signo}) }} disabled={cargando}>
+                {cargando ? "Consultando los astros..." : user ? `✨ Revelar mi horóscopo de hoy` : `✨ Crear cuenta y ver mi horóscopo`}
               </button>
             )}
           </div>
