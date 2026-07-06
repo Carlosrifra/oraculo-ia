@@ -174,12 +174,26 @@ export default function App() {
   const [sinSub, setSinSub] = useState(false)
   const [agotadas, setAgotadas] = useState(false)
   const [partido, setPartido] = useState(null)
+  const [partidos, setPartidos] = useState([])
+  const [cargandoPartidos, setCargandoPartidos] = useState(true)
   const [fechaNac, setFechaNac] = useState("")
   const [colorFav, setColorFav] = useState("")
   const [prediccion, setPrediccion] = useState(null)
   const [restantes, setRestantes] = useState(null)
 
   useEffect(() => onAuthStateChanged(auth, u => setUser(u)), [])
+
+  useEffect(() => {
+    fetch("/api/partidos")
+      .then(r => r.json())
+      .then(d => { setPartidos(d.partidos || []); setCargandoPartidos(false) })
+      .catch(() => setCargandoPartidos(false))
+  }, [])
+
+  const ETAPA_ES = {
+    GROUP_STAGE:"Fase de Grupos", LAST_32:"Dieciseisavos", LAST_16:"Octavos",
+    QUARTER_FINALS:"Cuartos de Final", SEMI_FINALS:"Semifinales", THIRD_PLACE:"Tercer Lugar", FINAL:"Final"
+  }
 
   const autenticar = async () => {
     setAuthError("")
@@ -394,19 +408,31 @@ export default function App() {
           <div style={s.card}>
             <h2 style={s.cardTitle}>El Oráculo del Mundial <span style={s.gratis}>2 GRATIS</span></h2>
             <p style={s.cardSub}>El cosmos lee TU energía personal para revelar el marcador.<br/>Elige un partido del calendario oficial:</p>
-            <div style={{maxHeight:310,overflowY:"auto",border:`1px solid ${C.glassBorder}`,borderRadius:14}}>
-              {[...PARTIDOS].sort((a,b)=>partidoTerminado(a)-partidoTerminado(b)).map((p,i)=>{
-                const terminado = partidoTerminado(p)
+            <div style={{maxHeight:340,overflowY:"auto",border:`1px solid ${C.glassBorder}`,borderRadius:14}}>
+              {cargandoPartidos && <div style={{padding:"2rem",textAlign:"center",color:C.violetL,fontStyle:"italic"}}>🔮 Consultando el calendario del cosmos...</div>}
+              {!cargandoPartidos && partidos.length===0 && <div style={{padding:"2rem",textAlign:"center",color:C.text3}}>No hay partidos disponibles ahora. Intenta más tarde.</div>}
+              {!cargandoPartidos && partidos.map((p,i)=>{
+                const bloqueado = p.terminado || p.enVivo || p.e1==="Por definir" || p.e2==="Por definir"
+                const nuevaEtapa = i===0 || partidos[i-1].etapa !== p.etapa
                 return (
-                <div key={i} onClick={()=>!terminado&&setPartido(p)} style={{...s.partidoRow,background:partido===p?"rgba(232,195,106,0.1)":"transparent",opacity:terminado?0.4:1,cursor:terminado?"not-allowed":"pointer"}}>
-                  <span style={{fontSize:11,color:C.text3,width:54,flexShrink:0,lineHeight:1.5}}>{p.f}<br/>{p.h}</span>
-                  <img src={bandera(p.c1)} alt="" style={{...s.flag,filter:terminado?"grayscale(1)":"none"}}/>
-                  <span style={{fontSize:13.5,flex:1,textAlign:"right",fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e1}</span>
-                  {terminado
-                    ? <span style={{fontSize:9,color:C.text3,border:`1px solid ${C.text3}`,borderRadius:6,padding:"2px 6px",whiteSpace:"nowrap"}}>FINALIZADO</span>
-                    : <span style={{fontSize:11,color:C.text3}}>vs</span>}
-                  <span style={{fontSize:13.5,flex:1,fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e2}</span>
-                  <img src={bandera(p.c2)} alt="" style={{...s.flag,filter:terminado?"grayscale(1)":"none"}}/>
+                <div key={p.id||i}>
+                  {nuevaEtapa && (
+                    <div style={{padding:"8px 16px",fontSize:11,fontWeight:700,color:C.violetL,letterSpacing:1,textTransform:"uppercase",background:"rgba(157,123,255,0.08)",borderBottom:`1px solid ${C.glassBorder}`}}>
+                      {ETAPA_ES[p.etapa]||p.etapa}
+                    </div>
+                  )}
+                  <div onClick={()=>!bloqueado&&setPartido(p)} style={{...s.partidoRow,background:partido===p?"rgba(232,195,106,0.1)":"transparent",opacity:bloqueado&&!p.enVivo?0.45:1,cursor:bloqueado?"not-allowed":"pointer"}}>
+                    <span style={{fontSize:11,color:C.text3,width:54,flexShrink:0,lineHeight:1.5}}>{p.f}<br/>{p.h}</span>
+                    <img src={bandera(p.c1)} alt="" style={{...s.flag,filter:p.terminado?"grayscale(1)":"none"}}/>
+                    <span style={{fontSize:13.5,flex:1,textAlign:"right",fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e1}</span>
+                    {p.enVivo
+                      ? <span style={{fontSize:12,fontWeight:700,color:"#ff5252",whiteSpace:"nowrap"}}>🔴 {p.marcador}</span>
+                      : p.terminado
+                      ? <span style={{fontSize:12,fontWeight:700,color:C.text2,whiteSpace:"nowrap"}}>{p.marcador}</span>
+                      : <span style={{fontSize:11,color:C.text3}}>vs</span>}
+                    <span style={{fontSize:13.5,flex:1,fontWeight:partido===p?600:400,color:partido===p?C.gold:C.text}}>{p.e2}</span>
+                    <img src={bandera(p.c2)} alt="" style={{...s.flag,filter:p.terminado?"grayscale(1)":"none"}}/>
+                  </div>
                 </div>
               )})}
             </div>
@@ -456,30 +482,6 @@ export default function App() {
             )}
             {agotadas && <SuscripcionCTA titulo="Tus 2 predicciones gratis se agotaron"/>}
 
-            <div style={{marginTop:28,paddingTop:24,borderTop:`1px solid ${C.glassBorder}`}}>
-              <p style={{textAlign:"center",fontSize:13,color:C.violetL,fontFamily:FH,fontStyle:"italic",marginBottom:16}}>
-                🏆 La Fase Final se aproxima — el oráculo la revelará a su tiempo
-              </p>
-              <div style={{display:"grid",gap:10}}>
-                {RONDAS.map((r,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",background:"rgba(10,8,20,0.5)",border:`1px solid ${r.corona?"rgba(232,195,106,0.35)":C.glassBorder}`,borderRadius:14,opacity:0.85}}>
-                    <span style={{fontSize:24,filter:"grayscale(0.3)"}}>{r.corona?"👑":"🔒"}</span>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:14.5,fontWeight:600,color:r.corona?C.gold:C.text,fontFamily:FH}}>{r.nombre}</div>
-                      <div style={{fontSize:11.5,color:C.text3,marginTop:2}}>{r.desc}</div>
-                    </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontSize:12,color:C.text2,fontWeight:600}}>{r.fechas}</div>
-                      <div style={{fontSize:10,color:C.violetL,marginTop:2,letterSpacing:0.5}}>PRÓXIMAMENTE</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p style={{textAlign:"center",fontSize:11.5,color:C.text3,marginTop:14,lineHeight:1.6}}>
-                Cuando se definan los cruces, podrás predecir cada partido de eliminación.<br/>
-                Sigue al oráculo para no perderte tu predicción de la Final. 🔮
-              </p>
-            </div>
           </div>
         )}
 
