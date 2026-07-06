@@ -1,19 +1,15 @@
-{
-  "name": "oraculo-ia",
-  "version": "2.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "firebase": "^10.12.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.0",
-    "vite": "^5.0.0"
-  }
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+
+// ⚙️ CONFIGURA: Firebase Console → Project Settings → General → Your apps → Config
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
 }
+
+const app = initializeApp(firebaseConfig)
+export const auth = getAuth(app)

@@ -1,0 +1,191 @@
+// ─── Verifica el idToken de Firebase → { uid, email } ───
+async function verificarUsuario(idToken) {
+  const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY
+  const r = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) }
+  )
+  const d = await r.json()
+  if (!r.ok || !d.users?.[0]) return null
+  return { uid: d.users[0].localId, email: d.users[0].email }
+}
+
+// ─── Suscripción activa en MercadoPago ───
+async function suscripcionActiva(email) {
+  const MP_TOKEN = process.env.MP_ACCESS_TOKEN
+  if (!MP_TOKEN) return false
+  try {
+    const r = await fetch(
+      `https://api.mercadopago.com/preapproval/search?payer_email=${encodeURIComponent(email)}&status=authorized`,
+      { headers: { Authorization: `Bearer ${MP_TOKEN}` } }
+    )
+    const d = await r.json()
+    return (d.results || []).some(s => s.status === 'authorized')
+  } catch(e) { return false }
+}
+
+// ─── Contador de predicciones gratis en Firestore (vía REST con el idToken del usuario) ───
+const fsUrl = (uid) => `https://firestore.googleapis.com/v1/projects/${process.env.FIREBASE_PROJECT_ID}/databases/(default)/documents/predicciones/${uid}`
+
+async function leerContador(uid, idToken) {
+  const r = await fetch(fsUrl(uid), { headers: { Authorization: `Bearer ${idToken}` } })
+  if (r.status === 404) return 0
+  const d = await r.json()
+  return parseInt(d.fields?.count?.integerValue || '0')
+}
+
+async function incrementarContador(uid, idToken, nuevo) {
+  await fetch(fsUrl(uid), {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { count: { integerValue: String(nuevo) } } }),
+  })
+}
+
+const GRATIS = 2 // predicciones de regalo por cuenta
+const LIMITE_GLOBAL_DIARIO = parseInt(process.env.LIMITE_GLOBAL_DIARIO || '800') // tope de consultas gratis/día en toda la app
+
+// ─── Contador global diario (documento admin en Firestore) ───
+const hoyClave = () => new Date().toISOString().slice(0,10) // "2026-06-18"
+const globalUrl = () => `https://firestore.googleapis.com/v1/projects/${process.env.FIREBASE_PROJECT_ID}/databases/(default)/documents/global/${hoyClave()}`
+
+async function leerGlobal(idToken) {
+  try {
+    const r = await fetch(globalUrl(), { headers: { Authorization: `Bearer ${idToken}` } })
+    if (r.status === 404) return 0
+    const d = await r.json()
+    return parseInt(d.fields?.count?.integerValue || '0')
+  } catch(e) { return 0 }
+}
+async function incrementarGlobal(idToken, actual) {
+  try {
+    await fetch(globalUrl(), {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { count: { integerValue: String(actual + 1) } } }),
+    })
+  } catch(e) { /* no romper la experiencia si falla el contador */ }
+}
+
+// ─── Numerología real: el marcador sale de los datos del usuario (determinista y variado) ───
+function marcadorNumerologico(equipo1, equipo2, nombre, fechaNac, colorFav) {
+  const semilla = `${equipo1}|${equipo2}|${(nombre||'').toLowerCase().trim()}|${fechaNac||''}|${(colorFav||'').toLowerCase().trim()}`
+  let h = 0
+  for (let i = 0; i < semilla.length; i++) {
+    h = (h * 31 + semilla.charCodeAt(i)) >>> 0
+  }
+  // Distribución realista de goles: 0 y 1 comunes, 2 frecuente, 3-4 ocasionales
+  const dist = [0,0,1,1,1,1,2,2,2,3,3,4]
+  const g1 = dist[h % dist.length]
+  const g2 = dist[Math.floor(h / 13) % dist.length]
+  const minuto = 1 + (Math.floor(h / 7) % 90)
+  return { g1, g2, minuto }
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+  if (req.method === 'OPTIONS') return res.status(204).end()
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' })
+
+  try {
+    const { tipo, signo, signo2, nombre, nombre2, cartas, pregunta, idToken,
+            equipo1, equipo2, fechaNac, nombreUsuario, colorFav } = req.body
+
+    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
+    if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Servicio no configurado' })
+
+    let usuario = null
+    let restantes = null
+    let premium = false
+
+    // ─── TODO requiere cuenta (cierra el hueco del horóscopo anónimo) ───
+    if (!idToken) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
+    usuario = await verificarUsuario(idToken)
+    if (!usuario) return res.status(401).json({ error: 'LOGIN_REQUERIDO' })
+
+    const vips = (process.env.VIP_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+    const esVip = vips.includes(usuario.email.toLowerCase())
+    premium = esVip || await suscripcionActiva(usuario.email)
+
+    // ─── Capa 1: límite global diario para usuarios NO premium ───
+    let usoGlobal = 0
+    if (!premium) {
+      usoGlobal = await leerGlobal(idToken)
+      if (usoGlobal >= LIMITE_GLOBAL_DIARIO) {
+        return res.status(429).json({ error: 'LIMITE_DIARIO' })
+      }
+    }
+
+    // ─── Mundial: además, 2 gratis por cuenta ───
+    if (tipo === 'mundial' && !premium) {
+      const usadas = await leerContador(usuario.uid, idToken)
+      if (usadas >= GRATIS) return res.status(403).json({ error: 'PREDICCIONES_AGOTADAS' })
+      restantes = GRATIS - usadas - 1
+    }
+    // ─── Tarot y compatibilidad: solo premium ───
+    if (['tarot', 'compatibilidad'].includes(tipo) && !premium) {
+      return res.status(403).json({ error: 'SIN_SUSCRIPCION', email: usuario.email })
+    }
+
+    let prompt = ''
+    const hoy = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+
+    if (tipo === 'horoscopo') {
+      if (!signo) return res.status(400).json({ error: 'Falta el signo' })
+      prompt = `Eres un astrólogo místico y cálido. Escribe el horóscopo de HOY (${hoy}) para ${signo}. Estructura: AMOR: [2 frases] DINERO: [2 frases] SALUD: [2 frases] CONSEJO DEL DÍA: [1 frase poderosa] NÚMERO DE LA SUERTE: [número] COLOR: [color]. Tono: místico pero esperanzador, español mexicano natural. NO uses markdown ni asteriscos.`
+    } else if (tipo === 'mundial') {
+      if (!equipo1 || !equipo2) return res.status(400).json({ error: 'Falta el partido' })
+      const { g1, g2, minuto } = marcadorNumerologico(equipo1, equipo2, nombreUsuario, fechaNac, colorFav)
+      const ganador = g1 > g2 ? equipo1 : g2 > g1 ? equipo2 : 'Empate'
+      prompt = `Eres un oráculo místico futbolero, divertido y carismático. La numerología YA reveló el resultado de ${equipo1} vs ${equipo2} del Mundial 2026: GANADOR ${ganador}, MARCADOR ${g1}-${g2}, MINUTO CLAVE ${minuto}. Tu trabajo es justificar místicamente ese resultado EXACTO con los datos del consultante: Nombre: ${nombreUsuario || 'el consultante'}, Fecha de nacimiento: ${fechaNac || 'desconocida'}, Color favorito: ${colorFav || 'desconocido'}. Suma dígitos de su fecha, conecta las letras de su nombre, vincula su color con la energía del partido — inventa conexiones divertidas pero convincentes que lleven a ESE marcador. Formato EXACTO: GANADOR: ${ganador} MARCADOR: ${g1}-${g2} LA SEÑAL: [cómo sus datos místicos revelan este resultado, 2-3 frases divertidas] MINUTO CLAVE: ${minuto} AMULETO DEL PARTIDO: [objeto cotidiano gracioso] FRASE DEL ORÁCULO: [1 frase épica para compartir]. Español mexicano festivo. NO uses markdown ni asteriscos. Respeta el marcador ${g1}-${g2} sin cambiarlo.`
+    } else if (tipo === 'tarot') {
+      if (!cartas || cartas.length !== 3) return res.status(400).json({ error: 'Se requieren 3 cartas' })
+      prompt = `Eres una tarotista experta y empática. El consultante preguntó: "${pregunta || 'orientación general sobre mi vida'}". Sacó estas 3 cartas: PASADO: ${cartas[0]}, PRESENTE: ${cartas[1]}, FUTURO: ${cartas[2]}. Da una lectura profunda conectando las 3 cartas con su pregunta. Estructura: EL PASADO: [interpretación] EL PRESENTE: [interpretación] EL FUTURO: [interpretación] MENSAJE DEL ORÁCULO: [síntesis poderosa y esperanzadora, 2-3 frases]. Español mexicano cálido, místico. NO uses markdown ni asteriscos.`
+    } else if (tipo === 'compatibilidad') {
+      if (!signo || !signo2) return res.status(400).json({ error: 'Faltan los signos' })
+      prompt = `Eres un astrólogo experto en relaciones. Analiza la compatibilidad entre ${nombre || 'Persona 1'} (${signo}) y ${nombre2 || 'Persona 2'} (${signo2}). Estructura: QUÍMICA: [porcentaje]% — [2 frases] FORTALEZAS: [2-3 puntos] DESAFÍOS: [2 puntos] CONSEJO PARA LA PAREJA: [2 frases] VEREDICTO DEL ORÁCULO: [1 frase memorable]. Español mexicano, tono divertido pero con sustancia. NO uses markdown ni asteriscos.`
+    } else {
+      return res.status(400).json({ error: 'Tipo inválido' })
+    }
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 700,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+
+    const text = await response.text()
+    let data
+    try { data = JSON.parse(text) }
+    catch(e) { return res.status(500).json({ error: 'Error del oráculo, intenta de nuevo' }) }
+
+    if (!response.ok) return res.status(500).json({ error: data.error?.message || 'El oráculo está descansando, intenta en un momento' })
+
+    const lectura = data.content?.filter(c => c.type === 'text').map(c => c.text).join('') || ''
+
+    // Incrementar contador de gratis (solo mundial no-premium)
+    if (tipo === 'mundial' && restantes !== null && usuario) {
+      const usadas = GRATIS - restantes - 1
+      await incrementarContador(usuario.uid, idToken, usadas + 1)
+    }
+    // Incrementar contador GLOBAL diario (toda consulta de no-premium)
+    if (!premium && usuario) {
+      await incrementarGlobal(idToken, usoGlobal)
+    }
+
+    return res.status(200).json({ lectura, restantes })
+  } catch (err) {
+    return res.status(500).json({ error: err.message })
+  }
+}

@@ -1,9 +1,44 @@
-{
-  "functions": {
-    "api/oraculo.js": { "maxDuration": 60 }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oráculo IA — Tu destino, revelado</title>
+    <meta name="description" content="Predicciones del Mundial 2026, horóscopo diario, tarot interactivo y compatibilidad de pareja con Inteligencia Artificial" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      html,body{margin:0;padding:0;background:#0A0814}
+      body::before{
+        content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+        background-image:
+          radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,.5) 50%, transparent 50%),
+          radial-gradient(1.5px 1.5px at 78% 12%, rgba(232,195,106,.6) 50%, transparent 50%),
+          radial-gradient(1px 1px at 35% 64%, rgba(255,255,255,.35) 50%, transparent 50%),
+          radial-gradient(1.5px 1.5px at 88% 48%, rgba(255,255,255,.4) 50%, transparent 50%),
+          radial-gradient(1px 1px at 56% 86%, rgba(157,123,255,.5) 50%, transparent 50%),
+          radial-gradient(1px 1px at 8% 78%, rgba(232,195,106,.4) 50%, transparent 50%),
+          radial-gradient(1.5px 1.5px at 64% 34%, rgba(255,255,255,.3) 50%, transparent 50%),
+          radial-gradient(1px 1px at 92% 82%, rgba(255,255,255,.45) 50%, transparent 50%),
+          radial-gradient(1px 1px at 24% 44%, rgba(157,123,255,.4) 50%, transparent 50%),
+          radial-gradient(1.5px 1.5px at 46% 8%, rgba(255,255,255,.5) 50%, transparent 50%);
+        animation: brillar 6s ease-in-out infinite alternate;
+      }
+      @keyframes brillar{from{opacity:.5}to{opacity:1}}
+      ::-webkit-scrollbar{width:8px;height:8px}
+      ::-webkit-scrollbar-track{background:#13102a}
+      ::-webkit-scrollbar-thumb{background:#3a2f6b;border-radius:8px}
+      ::-webkit-scrollbar-thumb:hover{background:#9D7BFF}
+      input,select,button{font-family:'Inter',sans-serif}
+      input[type="date"]{color-scheme:dark}
+      button{transition:transform .15s ease, box-shadow .15s ease, opacity .15s}
+      button:hover{transform:translateY(-1px)}
+      button:active{transform:translateY(0)}
+    </style>
+  </head>
+  <body>
+    <div id="root" style="position:relative;z-index:1"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
